@@ -10,86 +10,86 @@ from subprocess import Popen
 from os import path, kill, remove
 
 class InitError(Exception):
-	pass
+    pass
 
 def handle_args():
-	config = configpath # Global/local override.
+    config = configpath # Global/local override.
 
-	# Figure out what the command is.
-	command = {'start', 'stop', 'status', 'restart'}.intersection(argv)
-	if len(command) == 1:
-		command = command.pop()
-	else: # If none of the supported operations were in the arguments,
-		exit(usage)
-		
+    # Figure out what the command is.
+    command = {'start', 'stop', 'status', 'restart'}.intersection(argv)
+    if len(command) == 1:
+        command = command.pop()
+    else: # If none of the supported operations were in the arguments,
+        exit(usage)
+        
 
-	try:
-		# Change the config path, if specified. 
-		conf_arg = argv.index('--config')
-		argv.pop(conf_arg)
-		config = argv[argv.index('--config') + 1]
-	except IndexError:
-		raise InitError('--config flag lacks positional argument.')
-	except ValueError: # The --config flag was not specified.
-		pass
-	if not path.exists(config): # Check that we're not passing an empty path.
-		raise InitError('{} not found.'.format(config))
-		
-	# Run the the command function by string.
-	globals()[command](config)
+    try:
+        # Change the config path, if specified. 
+        conf_arg = argv.index('--config')
+        argv.pop(conf_arg)
+        config = argv[argv.index('--config') + 1]
+    except IndexError:
+        raise InitError('--config flag lacks positional argument.')
+    except ValueError: # The --config flag was not specified.
+        pass
+    if not path.exists(config): # Check that we're not passing an empty path.
+        raise InitError('{} not found.'.format(config))
+        
+    # Run the the command function by string.
+    globals()[command](config)
 
 
 def get_current_pid():
-	try:
-		with open(pidpath) as pidfile:
-			pid = int(pidfile.read())
-			kill(pid, 0) # Errors if pid empty, else does nothing.
-			return pid
-	except PermissionError:
-		raise
-	except (FileNotFoundError, OSError):
-		# No current pidfile, or pidfile references defunct process: continue.
-		return None
+    try:
+        with open(pidpath) as pidfile:
+            pid = int(pidfile.read())
+            kill(pid, 0) # Errors if pid empty, else does nothing.
+            return pid
+    except PermissionError:
+        raise
+    except (FileNotFoundError, OSError):
+        # No current pidfile, or pidfile references defunct process: continue.
+        return None
 
 def start(config):
-	# Check that there's not a running program.
-	pid = get_current_pid()
-	if pid:
-		raise InitError('foo is currently running with pid {}'.format(pid))
+    # Check that there's not a running program.
+    pid = get_current_pid()
+    if pid:
+        raise InitError('foo is currently running with pid {}'.format(pid))
 
-	# Launch the daemon.
-	d = Popen([binarypath, config])
-	with open(pidpath, 'w') as pidfile:
-		pidfile.write(str(d.pid))
-	return True
+    # Launch the daemon.
+    d = Popen([binarypath, config])
+    with open(pidpath, 'w') as pidfile:
+        pidfile.write(str(d.pid))
+    return True
 
 def stop(config):
-	pid = get_current_pid()
-	if not pid:
-		raise InitError('foo not running.')
-	kill(pid, 15)	
-	remove(pidpath)
-	return True
+    pid = get_current_pid()
+    if not pid:
+        raise InitError('foo not running.')
+    kill(pid, 15)    
+    remove(pidpath)
+    return True
 
 def status(config):
-	pid = get_current_pid()
-	if pid:
-		print('Active: foo is running with pid {}'.format(pid))
-		exit(0)
-	exit('Inactive: foo is not running.')
-	
+    pid = get_current_pid()
+    if pid:
+        print('Active: foo is running with pid {}'.format(pid))
+        exit(0)
+    exit('Inactive: foo is not running.')
+    
 def restart(config):
-	try:
-		stop(config)
-	except InitError: # These are fine. The daemon needn't be running.
-		pass
-	start(config)
+    try:
+        stop(config)
+    except InitError: # These are fine. The daemon needn't be running.
+        pass
+    start(config)
 
 if __name__ == '__main__':
-	try:
-		handle_args()
-	except PermissionError:
-		exit('Error: Permission denied. Are you root?')			
-	except InitError as e:
-		exit('Error: {}'.format(e))
+    try:
+        handle_args()
+    except PermissionError:
+        exit('Error: Permission denied. Are you root?')            
+    except InitError as e:
+        exit('Error: {}'.format(e))
 
