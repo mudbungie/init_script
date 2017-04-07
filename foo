@@ -45,6 +45,8 @@ def get_current_pid():
 			pid = int(pidfile.read())
 			kill(pid, 0) # Errors if pid empty, else does nothing.
 			return pid
+	except PermissionError:
+		raise
 	except (FileNotFoundError, OSError):
 		# No current pidfile, or pidfile references defunct process: continue.
 		return None
