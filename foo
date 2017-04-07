@@ -36,7 +36,7 @@ def handle_args():
 		raise InitError('{} not found.'.format(config))
 		
 	# Run the the command function by string.
-	if globals()[command](config)
+	globals()[command](config)
 
 
 def get_current_pid():
