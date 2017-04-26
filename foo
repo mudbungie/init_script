@@ -13,15 +13,17 @@ class InitError(Exception):
     pass
 
 def handle_args():
-    config = configpath # Global/local override.
+    config = configpath # Global/local override
 
     # Figure out what the command is.
-    command = {'start', 'stop', 'status', 'restart'}.intersection(argv)
+    commands = {'start':start, 'stop':stop, 'status':status, 'restart':restart}
+    command = set(commands.keys()).intersection(argv)
     if len(command) == 1:
         command = command.pop()
     else: # If none of the supported operations were in the arguments,
         exit(usage)
-        
+    # Change it to a function reference.
+    command = commands[command]
 
     try:
         # Change the config path, if specified. 
@@ -35,8 +37,8 @@ def handle_args():
     if not path.exists(config): # Check that we're not passing an empty path.
         raise InitError('{} not found.'.format(config))
         
-    # Run the the command function by string.
-    globals()[command](config)
+    #run it!
+    command(config)
 
 
 def get_current_pid():
